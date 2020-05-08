@@ -4,6 +4,8 @@ import config
 import json
 import time
 
+from oktaadminapi import app
+
 from flask import Flask, abort, jsonify, request, make_response
 from flask_cors import CORS
 from functools import wraps
@@ -13,13 +15,6 @@ from okta.admin import OktaAdmin
 from okta.factors import OktaFactors
 from okta.util import OktaUtil
 from okta.rest import RestUtil
-
-"""
-GLOBAL VARIABLES ########################################################################################################
-"""
-app = Flask(__name__)
-app.secret_key = "6w_#w*~AVts3!*yd&C]jP0(x_1ssd]MVgzfAw8%fF+c@|ih0s1H&yZQC&-u~O[--"  # For the session
-CORS(app)
 
 @app.errorhandler(401)
 def not_authorized(error):
@@ -246,12 +241,3 @@ def activate_totp():
 #     url = links[0]["href"]
 #     print("POSTing to url {0}".format(url))
 #     RestUtil.execute_post(url, body, headers)
-
-
-"""
-MAIN ##################################################################################################################
-"""
-if __name__ == "__main__":
-    # This is to run on c9.io.. you may need to change or make your own runner
-    #print("okta_config: {0}".format(json.dumps(okta_settings, indent=4, sort_keys=True)))
-    app.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", 3000)))
