@@ -1,11 +1,13 @@
 import json
+import logging
 import os
 
 from okta.util import OktaUtil
 from okta.rest import RestUtil
-from settings import *
 
 class OktaAuth:
+
+    #logger = logging.getLogger(__name__)
 
     okta_config = {
         "okta_org_name": os.getenv("OKTA_ORG_NAME"),
@@ -14,16 +16,12 @@ class OktaAuth:
         "client_secret": os.getenv("CLIENT_SECRET")
     }
 
-    def __init__(self):
-        print("OktaAuth init()")
-        #if okta_config:
-        #    self.okta_config = okta_config
-        #    #print("self.okta_config: {0}".format(self.okta_config))
-        #else:
-        #    raise Exception("Requires okta_config")
+    # def __init__(self):
+    #     self.logger.debug("OktaAuth init()")
+    #     self.logger.info("okta_config: {0}".format(self.okta_config))
 
     def authenticate(self, username, password, additional_options=None, headers=None):
-        print("OktaAuth.authenticate()")
+        #self.logger.debug("OktaAuth.authenticate()")
         url = "{host}/api/v1/authn".format(host=self.okta_config["okta_org_name"])
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
@@ -42,7 +40,7 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def authenticate_with_activation_token(self, token, headers=None):
-        print("OktaAuth.authenticate_with_activation_token()")
+        #self.logger.debug("OktaAuth.authenticate_with_activation_token()")
         url = "{host}/api/v1/authn".format(host=self.okta_config["okta_org_name"])
         okta_headers = OktaUtil.get_protected_okta_headers(self.okta_config)
 
@@ -53,7 +51,7 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def get_transaction_state(self, token, headers=None):
-        print("OktaAuth.authenticate_with_activation_token()")
+        #self.logger.debug("OktaAuth.authenticate_with_activation_token()")
         url = "{host}/api/v1/authn".format(host=self.okta_config["okta_org_name"])
         okta_headers = OktaUtil.get_default_okta_headers(self.okta_config)
 
@@ -64,7 +62,7 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def reset_password_with_state_token(self, token, password, headers=None):
-        print("OktaAuth.reset_password_with_state_token()")
+        #self.logger.debug("OktaAuth.reset_password_with_state_token()")
         url = "{host}/api/v1/authn/credentials/reset_password".format(host=self.okta_config["okta_org_name"])
         okta_headers = OktaUtil.get_protected_okta_headers(self.okta_config)
 
@@ -76,7 +74,7 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def create_oauth_authorize_url(self, response_type, state, auth_options):
-        print("OktaAuth.create_oauth_authorize_url()")
+        #self.logger.debug("OktaAuth.create_oauth_authorize_url()")
 
         url = (
             "{issuer}/v1/authorize?"
@@ -99,8 +97,8 @@ class OktaAuth:
         return url
 
     def get_oauth_token(self, code, grant_type, auth_options=None, headers=None):
-        print("OktaAuth.get_oauth_token()")
-        okta_headers = OktaUtil.get_oauth_okta_headers(headers)
+        #self.logger.debug("OktaAuth.get_oauth_token()")
+        okta_headers = OktaUtil.get_oauth_okta_headers(headers, self.okta_config["client_id"], self.okta_config["client_secret"])
 
         url = (
             "{issuer}/v1/token?"
@@ -125,25 +123,17 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def introspect(self, token, headers=None):
-        print("OktaAuth.introspect()")
+        #self.logger.debug("OktaAuth.introspect()")
         okta_headers = OktaUtil.get_oauth_okta_headers(headers, self.okta_config["client_id"], self.okta_config["client_secret"])
-        #okta_headers = OktaUtil.get_oauth_okta_headers(headers, self.okta_config["client_id"])
-        # okta_headers = {
-        #     "Accept": "application/json",
-        #     "Content-Type": "application/x-www-form-urlencoded",
-        #     "Authorization": "Bearer {0}".format(token)
-        # }
-
         url = "{issuer}/v1/introspect?token={token}".format(
             issuer=self.okta_config["issuer"],
             token=token)
         body = {}
-
         return RestUtil.execute_post(url, body, okta_headers)
 
     def userinfo(self, token, headers=None):
-        print("OktaAuth.userinfo()")
-        okta_headers = OktaUtil.get_oauth_okta_bearer_token_headers(headers, token)
+        #self.logger.debug("OktaAuth.userinfo()")
+        okta_headers = OktaUtil.get_oauth_okta_bearer_token_headers(token)
 
         url = "{issuer}/v1/userinfo?token={token}".format(
             issuer=self.okta_config["issuer"],
@@ -158,7 +148,7 @@ class OktaAuth:
     # used by Okta Verify Push, this starts the MFA transaction
 
     def send_push(self, factor_id, state_token, headers=None):
-        print("send_push()")
+        #self.logger.debug("send_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/verify".format(self.okta_config["okta_org_name"], factor_id)
@@ -170,7 +160,7 @@ class OktaAuth:
 
     # this is the Okta Verify Push polling method
     def poll_for_push(self, factor_id, state_token, headers=None):
-        print("poll_for_push()")
+        #self.logger.debug("poll_for_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/verify".format(self.okta_config["okta_org_name"], factor_id)
@@ -180,7 +170,7 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     def resend_push(self, factor_id, state_token, headers=None):
-        print("resend_push()")
+        #self.logger.debug("resend_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/verify/resend".format(self.okta_config["okta_org_name"], factor_id)
@@ -192,7 +182,7 @@ class OktaAuth:
 
     # used by SMS, voice, Google Authenticator and Okta Verify OTP factors
     def verify_totp(self, factor_id, state_token, pass_code=None, headers=None):
-        print("verify_totp()")
+        #self.logger.debug("verify_totp()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/verify".format(self.okta_config["okta_org_name"], factor_id)
@@ -205,7 +195,7 @@ class OktaAuth:
 
     # used for Security Question factor
     def verify_answer(self, factor_id, state_token, answer, headers=None):
-        print("verify_answer()")
+        #self.logger.debug("verify_answer()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/verify".format(self.okta_config["okta_org_name"], factor_id)
@@ -226,7 +216,7 @@ class OktaAuth:
     # Okta Verify Push
 
     def enroll_push(self, state_token, factor_type, provider, headers=None):
-        print("enroll_push()")
+        #self.logger.debug("enroll_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors".format(self.okta_config["okta_org_name"])
@@ -240,7 +230,7 @@ class OktaAuth:
 
     # this is the Okta Verify Push polling method
     def poll_for_enrollment_push(self, factor_id, state_token, headers=None):
-        print("poll_for_enrollment_push()")
+        #self.logger.debug("poll_for_enrollment_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/lifecycle/activate/poll".format(
@@ -254,7 +244,7 @@ class OktaAuth:
 
     # this is the Okta Verify Push activation method
     def activate_push(self, factor_id, state_token, headers=None):
-        print("activate_push()")
+        #self.logger.debug("activate_push()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/lifecycle/activate".format(
@@ -268,7 +258,7 @@ class OktaAuth:
 
     # Okta Verify OTP and Google Authenticator
     def enroll_totp(self, state_token, factor_type, provider, headers=None):
-        print("enroll_totp()")
+        #self.logger.debug("enroll_totp()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors".format(self.okta_config["okta_org_name"])
@@ -282,7 +272,7 @@ class OktaAuth:
 
     # SMS and voice call
     def enroll_sms_voice(self, state_token, factor_type, provider, phone_number, headers=None):
-        print("enroll_sms_voice()")
+        #self.logger.debug("enroll_sms_voice()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors".format(self.okta_config["okta_org_name"])
@@ -299,7 +289,7 @@ class OktaAuth:
 
     # security question
     def enroll_question(self, state_token, factor_type, provider, question, answer, headers=None):
-        print("enroll_question()")
+        #self.logger.debug("enroll_question()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors".format(self.okta_config["okta_org_name"])
@@ -317,7 +307,7 @@ class OktaAuth:
 
     # this is for Google Authenticator, SMS, and Voice factors
     def activate_totp(self, factor_id, state_token, pass_code, headers=None):
-        print("enroll_totp()")
+        #self.logger.debug("enroll_totp()")
         okta_headers = OktaUtil.get_default_okta_headers(headers)
 
         url = "{0}/api/v1/authn/factors/{1}/lifecycle/activate".format(
@@ -332,5 +322,5 @@ class OktaAuth:
         return RestUtil.execute_post(url, body, okta_headers)
 
     """
-    MFA enrollment methods
+    end MFA enrollment methods
     """
