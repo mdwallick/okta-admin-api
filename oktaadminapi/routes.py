@@ -39,7 +39,6 @@ def authenticated(f):
 
         # Just validate they have a legit token. Any additional access rules will be by another wrapper
         access_token = get_access_token()
-        #if is_token_valid_remote(access_token):
         if is_token_valid(access_token):
             return f(*args, **kws)
         else:
@@ -68,7 +67,7 @@ def is_token_valid(token):
     client_secret = os.getenv("CLIENT_SECRET")
     audience = os.getenv("AUDIENCE")
     jwtVerifier = JwtVerifier(issuer, client_id, client_secret)
-    return jwtVerifier.isTokenValid(token, audience)
+    return jwtVerifier.is_token_valid(token, audience)
 
 
 def is_token_valid_remote(token):
