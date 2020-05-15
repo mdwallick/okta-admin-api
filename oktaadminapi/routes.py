@@ -1,7 +1,8 @@
 import base64
-import os
 import config
 import json
+import logging
+import os
 import time
 
 from oktaadminapi import app
@@ -10,11 +11,10 @@ from flask import Flask, abort, jsonify, request, make_response
 from flask_cors import CORS
 from functools import wraps
 
-from okta.auth import OktaAuth
-from okta.admin import OktaAdmin
-from okta.factors import OktaFactors
-from okta.util import OktaUtil
-from okta.rest import RestUtil
+from oktajwt import JwtVerifier
+from okta import OktaAuth, OktaFactors, OktaUtil, OktaUsers, RestUtil
+
+logger = logging.getLogger(__name__)
 
 @app.errorhandler(401)
 def not_authorized(error):
@@ -35,11 +35,11 @@ function decorators
 def authenticated(f):
     @wraps(f)
     def decorated_function(*args, **kws):
-        print("authenticated()")
+        logger.debug("authenticated()")
 
         # Just validate they have a legit token. Any additional access rules will be by another wrapper
         access_token = get_access_token()
-        if is_token_valid_remote(access_token):
+        if is_token_valid(access_token):
             return f(*args, **kws)
         else:
             abort(401)
@@ -49,7 +49,7 @@ def authenticated(f):
 def get_access_token():
     access_token = None
     authorization_header = request.headers.get("authorization")
-    print("Authorization header {0}".format(authorization_header))
+    logger.debug("Authorization header {0}".format(authorization_header))
 
     if authorization_header != None:
         header = "Bearer"
@@ -60,13 +60,23 @@ def get_access_token():
 
     return access_token
 
+def is_token_valid(token):
+    logger.debug("is_token_valid()")
+    issuer = os.getenv("ISSUER")
+    client_id = os.getenv("CLIENT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
+    audience = os.getenv("AUDIENCE")
+    jwtVerifier = JwtVerifier(issuer, client_id, client_secret)
+    return jwtVerifier.is_token_valid(token, audience)
+
+
 def is_token_valid_remote(token):
-    print("is_token_valid_remote(token)")
+    logger.debug("is_token_valid_remote(token)")
     result = False
 
     okta_auth = OktaAuth()
     introspect_response = okta_auth.introspect(token=token)
-    #print("introspect_response: {0}".format(introspect_response))
+    logger.debug("introspect_response: {0}".format(introspect_response))
 
     if "active" in introspect_response:
         result = introspect_response["active"]
@@ -74,7 +84,7 @@ def is_token_valid_remote(token):
     return result
 
 def get_claims_from_token():
-    print("get_claims_from_token(token)")
+    logger.debug("get_claims_from_token(token)")
     token = get_access_token()
     claims = None
 
@@ -109,26 +119,26 @@ TODO implement endpoints for user profile updates and self-service factor manage
 @app.route("/api/v1/user", methods=["GET"])
 @authenticated
 def get_user():
-    print("get_user")
-    okta_admin = OktaAdmin()
+    logger.debug("get_user()")
+    okta_user = OktaUsers()
     user_id = get_userid_from_token()
-    return okta_admin.get_user(user_id)
+    return okta_user.get_user(user_id)
 
 # update user
 @app.route("/api/v1/user", methods=["POST"])
 @authenticated
 def update_user():
-    print("update_user")
-    okta_admin = OktaAdmin()
+    logger.debug("update_user()")
+    okta_user = OktaUsers()
     user_id = get_userid_from_token()
     user = request.get_json()
-    return okta_admin.update_user(user_id, user)
+    return okta_user.update_user(user_id, user)
 
 # get enrolled factors
 @app.route("/api/v1/factors", methods=["GET"])
 @authenticated
 def get_enrolled_factors():
-    print("get_enrolled_factors()")
+    logger.debug("get_enrolled_factors()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     response = okta_factors.list_enrolled_factors(user_id)
@@ -138,7 +148,7 @@ def get_enrolled_factors():
 @app.route("/api/v1/factors/available", methods=["GET"])
 @authenticated
 def get_available_factors():
-    print("get_available_factors()")
+    logger.debug("get_available_factors()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     response = okta_factors.list_available_factors(user_id)
@@ -148,7 +158,7 @@ def get_available_factors():
 @app.route("/api/v1/factors/available/questions", methods=["GET"])
 @authenticated
 def get_available_questions():
-    print("get_available_questions()")
+    logger.debug("get_available_questions()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     response = okta_factors.list_available_questions(user_id)
@@ -157,7 +167,7 @@ def get_available_questions():
 @app.route("/api/v1/factors/enroll/question", methods=["POST"])
 @authenticated
 def enroll_question():
-    print("enroll_question()")
+    logger.debug("enroll_question()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     body = request.get_json()
@@ -169,46 +179,46 @@ def enroll_question():
 @app.route("/api/v1/factors/enroll/sms", methods=["POST"])
 @authenticated
 def enroll_sms():
-    print("enroll_sms()")
+    logger.debug("enroll_sms()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     body = request.get_json()
     phone_number = body["phone_number"]
     response = okta_factors.enroll_sms(user_id, phone_number)
     factor_id = response["id"]
-    print("Factor with ID {0} pending activation".format(factor_id))
+    logger.info("Factor with ID {0} pending activation".format(factor_id))
     return response
 
 @app.route("/api/v1/factors/enroll/voice", methods=["POST"])
 @authenticated
 def enroll_voice():
-    print("enroll_voice()")
+    logger.debug("enroll_voice()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     body = request.get_json()
     phone_number = body["phone_number"]
     response = okta_factors.enroll_voice(user_id, phone_number)
     factor_id = response["id"]
-    print("Factor with ID {0} pending activation".format(factor_id))
+    logger.info("Factor with ID {0} pending activation".format(factor_id))
     return response
 
 @app.route("/api/v1/factors/enroll/email", methods=["POST"])
 @authenticated
 def enroll_email():
-    print("enroll_email()")
+    logger.debug("enroll_email()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     body = request.get_json()
     email = body["email"]
     response = okta_factors.enroll_email(user_id, email)
     factor_id = response["id"]
-    print("Factor with ID {0} pending activation".format(factor_id))
+    logger.info("Factor with ID {0} pending activation".format(factor_id))
     return response
 
 @app.route("/api/v1/factors/activate/totp", methods=["POST"])
 @authenticated
 def activate_totp():
-    print("activate_totp()")
+    logger.debug("activate_totp()")
     okta_factors = OktaFactors()
     user_id = get_userid_from_token()
     body = request.get_json()
@@ -219,25 +229,25 @@ def activate_totp():
 # @app.route("/api/v1/factors/enroll/push", methods=["POST"])
 # @authenticated
 # def enroll_push():
-#     print("enroll_push()")
+#     logger.debug("enroll_push()")
 #     okta_factors = OktaFactors()
 #     user_id = get_userid_from_token()
 #     response = okta_factors.enroll_push(user_id)
 #     factor_id = response["id"]
-#     print("Factor with ID {0} pending activation".format(factor_id))
+#     logger.info("Factor with ID {0} pending activation".format(factor_id))
 #     # take the response and send it off to have the activation link emailed
 #     #enroll_push_send_activation_email(response)
 #     return response
 
 # take the response from enrolling the push and email the link out
 # def enroll_push_send_activation_email(response):
-#     print("enroll_push_send_activation_email()")
+#     logger.debug("enroll_push_send_activation_email()")
 #     links = response["_embedded"]["activation"]["_links"]["send"]
-#     print("links: {0}".format(json.dumps(links, indent=2, sort_keys=True)))
+#     logger.debug("links: {0}".format(json.dumps(links, indent=2, sort_keys=True)))
 #     # do a POST to the email link
 #     access_token = get_access_token()
 #     headers = OktaUtil.get_oauth_okta_bearer_token_headers(access_token)
 #     body = {}
 #     url = links[0]["href"]
-#     print("POSTing to url {0}".format(url))
+#     logger.debug("POSTing to url {0}".format(url))
 #     RestUtil.execute_post(url, body, headers)

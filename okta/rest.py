@@ -1,7 +1,10 @@
 import requests
 import json
+import logging
 
 class RestUtil:
+
+    logger = logging.getLogger(__name__)
 
     @staticmethod
     def execute_post(url, body=None, headers=None):
@@ -27,15 +30,11 @@ class RestUtil:
     def handle_response_as_json(rest_response):
         try:
             response_json = rest_response.json()
-            #response_json = {
-            #    "status_code": rest_response.status_code,
-            #    "body": rest_response.json()
-            #}
         except Exception as ex:
-            print("Exception: {0}".format(ex))
+            RestUtil.logger.error("Exception: {0}".format(ex))
             response_json = {"status": "none"}
 
-        print(json.dumps(response_json, indent=4, sort_keys=True))
+        RestUtil.logger.debug(json.dumps(response_json, indent=4, sort_keys=True))
         return response_json
 
     @staticmethod
