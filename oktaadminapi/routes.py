@@ -11,7 +11,7 @@ from flask import Flask, abort, jsonify, request, make_response
 from flask_cors import CORS
 from functools import wraps
 
-from oktajwt import JwtVerifier
+from oktajwt import *
 from okta import OktaAuth, OktaFactors, OktaUtil, OktaUsers, RestUtil
 
 logger = logging.getLogger(__name__)
@@ -54,7 +54,6 @@ def get_access_token():
     if authorization_header != None:
         header = "Bearer"
         bearer, access_token = authorization_header.split(" ")
-        #print("{0}: {1}".format(bearer, access_token))
         if bearer != header:
             abort(401)
 
@@ -110,6 +109,27 @@ def decode_base64(data):
 """
 ROUTES ##################################################################################################################
 """
+
+@app.route("/api/v1/token_test", methods=["GET"])
+def token_test():
+    """ a simple route to show token validation """
+    logger.debug("token_test()")
+    access_token = get_access_token()
+    issuer = os.getenv("ISSUER")
+    client_id = os.getenv("CLIENT_ID")
+    client_secret = os.getenv("CLIENT_SECRET")
+    audience = os.getenv("AUDIENCE")
+
+    try:
+        jwtVerifier = JwtVerifier(issuer, client_id, client_secret)
+        claims = jwtVerifier.decode(access_token, audience)
+        return jsonify(claims)
+    except (ExpiredTokenError, InvalidSignatureError, KeyNotFoundError, 
+            InvalidKeyError, Exception) as e:
+        # something is wrong with the token
+        # expired, bad signature, etc.
+        logger.debug("Exception in token_test(): {0}".format(e))
+        abort(401)
 
 """
 TODO implement endpoints for user profile updates and self-service factor management
