@@ -15,10 +15,10 @@ def create_app():
         logger = logging.getLogger(__name__)
         logging.basicConfig(level=app.config.get("LOG_LEVEL"))
         
-        from oktaadminapi import groups, factors, user
-        app.register_blueprint(factors.bp, url_prefix="/api/v1/factors")
+        from oktaadminapi import groups, factors, users
+        app.register_blueprint(factors.bp, url_prefix="/api/v1/users")
         app.register_blueprint(groups.bp, url_prefix="/api/v1/groups")
-        app.register_blueprint(user.bp, url_prefix="/api/v1/user")
+        app.register_blueprint(users.bp, url_prefix="/api/v1/users")
 
         # logger.debug(app.config)
         logger.info("    Org name: {0}".format(app.config.get("ORG_NAME")))
