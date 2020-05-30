@@ -10,11 +10,11 @@ from okta.models.factor.FactorEnrollRequest import FactorEnrollRequest
 from oktaadminapi.decorators import authenticated
 
 bp = Blueprint("factors", __name__)
-factorsClient = FactorsClient(base_url=app.config.get("ORG_NAME"),
-                              api_token=app.config.get("API_TOKEN"))
+client = FactorsClient(base_url=app.config.get("ORG_NAME"),
+                       api_token=app.config.get("API_TOKEN"))
 
 
-@bp.route("/<user_id>", methods=["GET"])
+@bp.route("/<user_id>/factors", methods=["GET"])
 @authenticated
 def get_enrolled_factors(user_id):
     """
@@ -22,7 +22,7 @@ def get_enrolled_factors(user_id):
     """
     app.logger.debug("get_enrolled_factors({0})".format(user_id))
     try:
-        response = factorsClient.get_lifecycle_factors(user_id)
+        response = client.get_lifecycle_factors(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -34,7 +34,7 @@ def get_enrolled_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@bp.route("/<user_id>/available", methods=["GET"])
+@bp.route("/<user_id>/factors/catalog", methods=["GET"])
 @authenticated
 def get_available_factors(user_id):
     """
@@ -42,7 +42,7 @@ def get_available_factors(user_id):
     """
     app.logger.debug("get_available_factors({0})".format(user_id))
     try:
-        response = factorsClient.get_factors_catalog(user_id)
+        response = client.get_factors_catalog(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -54,7 +54,7 @@ def get_available_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@bp.route("/<user_id>/available/questions", methods=["GET"])
+@bp.route("/<user_id>/factors/questions", methods=["GET"])
 @authenticated
 def get_available_questions(user_id):
     """
@@ -62,7 +62,7 @@ def get_available_questions(user_id):
     """
     app.logger.debug("get_available_questions({0})".format(user_id))
     try:
-        response = factorsClient.get_available_questions(user_id)
+        response = client.get_available_questions(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -74,13 +74,102 @@ def get_available_questions(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@bp.route("/<user_id>/enroll/question", methods=["POST"])
 @authenticated
-def enroll_question(user_id):
-    app.logger.debug("enroll_question({0})".format(user_id))
+@bp.route("/<user_id>/factors/<factor_type>", methods=["POST"])
+@bp.route("/<user_id>/factors/<factor_type>/<provider>", methods=["POST"])
+def enroll_factor(user_id, factor_type, provider="OKTA"):
+    """
+    Main entry point for enrolling a factor
+
+    Factor type must be one of:
+    question
+    sms
+    call
+    email
+    totp (Google Authenticator or Okta Verify OTP)
+    push
+
+    provider must be one of
+    Okta
+    Google
+    """
+    provider = str(provider).upper()
+
+    if factor_type == "totp":
+        # map totp to the real factor type.
+        # totp is just nicer in a URL
+        factor_type = "token:software:totp"
+
+    app.logger.debug("enroll_factor({0}, {1}, {2})".format(user_id, factor_type, provider))
     body = request.get_json()
-    question = body["question"]
-    answer = body["answer"]
+    app.logger.info("got request body: {0}".format(body))
+
+    if factor_type == "question":
+        question = body.get("question")
+        answer = body.get("answer")
+
+        if not question or not answer:
+            message = {
+                "error_summary": "A question and answer are required"
+            }
+            return make_response(jsonify(message), 400)
+
+        return enroll_question(user_id, question, answer)
+    elif factor_type == "sms" or factor_type == "call":
+        phone_number = body.get("phoneNumber")
+
+        if not phone_number:
+            message = {
+                "error_summary": "A phone number is required"
+            }
+            return make_response(jsonify(message), 400)
+
+        return enroll_phone_factor(user_id, factor_type, phone_number)
+    elif factor_type == "email":
+        email = body.get("email")
+
+        if not email:
+            message = {
+                "error_summary": "An email address is required"
+            }
+            return make_response(jsonify(message), 400)
+
+        return enroll_email(user_id, email)
+    elif factor_type == "token:software:totp":
+        if provider == "OKTA" or provider == "GOOGLE":
+            return enroll_totp(user_id, provider)
+        else:
+            message = {
+                "error_summary": "Provider must be one of Okta or Google"
+            }
+            return make_response(jsonify(message), 400)
+
+    elif factor_type == "push":
+        return enroll_push(user_id)
+    else:
+        error = "Factor type {0} is not supported".format(factor_type)
+        message = {
+            "error_summary": error
+        }
+        return make_response(jsonify(message), 400)
+
+
+def __enroll_factor(user_id, enroll_request):
+    try:
+        response = client.enroll_factor(user_id, enroll_request)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+def enroll_question(user_id, question, answer):
+    app.logger.debug("enroll_question({0}, {1}, ****)".format(user_id, question))
     enroll_request = {
         "factorType": "question",
         "provider": "OKTA",
@@ -89,77 +178,23 @@ def enroll_question(user_id):
             "answer": answer
         }
     }
-    try:
-        response = factorsClient.enroll_factor(user_id, enroll_request)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
+    return __enroll_factor(user_id, enroll_request)
 
 
-@authenticated
-@bp.route("/<user_id>/enroll/sms", methods=["POST"])
-def enroll_sms(user_id):
-    app.logger.debug("enroll_sms({0})".format(user_id))
-    body = request.get_json()
-    phone_number = body["phoneNumber"]
+def enroll_phone_factor(user_id, factor_type, phone_number):
+    app.logger.debug("enroll_sms({0}, {1})".format(user_id, phone_number))
     enroll_request = {
-        "factorType": "sms",
+        "factorType": factor_type,
         "provider": "OKTA",
         "profile": {
             "phoneNumber": phone_number
         }
     }
-    try:
-        response = factorsClient.enroll_factor(user_id, enroll_request, True)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
+    return __enroll_factor(user_id, enroll_request)
 
 
-@authenticated
-@bp.route("/<user_id>/enroll/voice", methods=["POST"])
-def enroll_voice(user_id):
-    app.logger.debug("enroll_voice({0})".format(user_id))
-    body = request.get_json()
-    phone_number = body["phoneNumber"]
-    enroll_request = {
-        "factorType": "call",
-        "provider": "OKTA",
-        "profile": {
-            "phoneNumber": phone_number
-        }
-    }
-    try:
-        response = factorsClient.enroll_factor(user_id, enroll_request, True)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
-
-
-@authenticated
-@bp.route("/<user_id>/enroll/email", methods=["POST"])
-def enroll_email(user_id):
+def enroll_email(user_id, email):
     app.logger.debug("enroll_email({0})".format(user_id))
-    body = request.get_json()
-    email = body["email"]
     enroll_request = {
         "factorType": "email",
         "provider": "OKTA",
@@ -167,21 +202,9 @@ def enroll_email(user_id):
             "email": email
         }
     }
-    try:
-        response = factorsClient.enroll_factor(user_id, enroll_request, True)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
+    return __enroll_factor(user_id, enroll_request)
 
 
-@authenticated
-@bp.route("/<user_id>/enroll/totp/<provider>", methods=["POST"])
 def enroll_totp(user_id, provider):
     """
     Enrolls Okta Verify OTP (not push) or Google Authenticator
@@ -189,10 +212,28 @@ def enroll_totp(user_id, provider):
     app.logger.debug("enroll_totp({0}, {1})".format(user_id, provider))
     enroll_request = {
         "factorType": "token:software:totp",
-        "provider": str(provider).upper() # OKTA or GOOGLE
+        "provider": str(provider).upper()  # OKTA or GOOGLE
     }
+    return __enroll_factor(user_id, enroll_request)
+
+
+def enroll_push(user_id):
+    app.logger.debug("enroll_push({0})".format(user_id))
+    enroll_request = {
+        "factorType": "push",
+        "provider": "OKTA"
+    }
+    return __enroll_factor(user_id, enroll_request)
+
+
+@authenticated
+@bp.route("/<user_id>/factor/<factor_id>/activate/push", methods=["POST"])
+def poll_push_activation(user_id, factor_id):
+    app.logger.debug("poll_push_activation({0}, {1})".format(user_id, factor_id))
+    body = request.get_json()
+    poll_url = body.get("pollingUrl")
     try:
-        response = factorsClient.enroll_factor(user_id, enroll_request, True)
+        response = client.push_activation_poll(poll_url)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -212,9 +253,9 @@ def activate_totp(user_id, factor_id):
     """
     app.logger.debug("activate_totp({0}, {1})".format(user_id, factor_id))
     body = request.get_json()
-    pass_code = body["passCode"]
+    pass_code = body.get("passCode")
     try:
-        response = factorsClient.activate_factor(user_id, factor_id, pass_code)
+        response = client.activate_factor(user_id, factor_id, pass_code)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -224,29 +265,3 @@ def activate_totp(user_id, factor_id):
             "error_code": e.error_code
         }
         return make_response(jsonify(message), e.status_code)
-
-# @bp.route("/enroll/push", methods=["POST"])
-# @authenticated
-# def enroll_push():
-#     logger.debug("enroll_push()")
-#     okta_factors = OktaFactors()
-#     user_id = get_userid_from_token()
-#     response = okta_factors.enroll_push(user_id)
-#     factor_id = response["id"]
-#     logger.info("Factor with ID {0} pending activation".format(factor_id))
-#     # take the response and send it off to have the activation link emailed
-#     #enroll_push_send_activation_email(response)
-#     return response
-
-# # take the response from enrolling the push and email the link out
-# def enroll_push_send_activation_email(response):
-#     logger.debug("enroll_push_send_activation_email()")
-#     links = response["_embedded"]["activation"]["_links"]["send"]
-#     logger.debug("links: {0}".format(json.dumps(links, indent=2, sort_keys=True)))
-#     # do a POST to the email link
-#     access_token = get_access_token()
-#     headers = OktaUtil.get_oauth_okta_bearer_token_headers(access_token)
-#     body = {}
-#     url = links[0]["href"]
-#     logger.debug("POSTing to url {0}".format(url))
-#     RestUtil.execute_post(url, body, headers)
