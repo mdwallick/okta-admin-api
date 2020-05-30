@@ -1,6 +1,5 @@
 # routes for the user API endpoints
 # TODO implement the rest of the user API endpoints
-#       activate_user
 #       get_paged_users
 
 from flask import Blueprint, jsonify, make_response, request
@@ -13,7 +12,7 @@ from okta.models.user.User import User
 from oktaadminapi.decorators import authenticated
 from oktaadminapi.okta_class_extensions import ExtendedUser
 
-bp = Blueprint("user", __name__)
+bp = Blueprint("users", __name__)
 client = UsersClient(base_url=app.config.get("ORG_NAME"),
                      api_token=app.config.get("API_TOKEN"),
                      user_class=ExtendedUser)
@@ -100,8 +99,14 @@ def create_user():
     """ create a user """
     app.logger.debug("create_user()")
     user = request.get_json()
+    activate = str(request.args.get("activate")).lower()
+    if activate == "false":
+        activate = False
+    else:
+        activate = True
+
     try:
-        response = client.create_user(user)
+        response = client.create_user(user, activate)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -133,7 +138,7 @@ def update_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/change_password", methods=["POST"])
+@bp.route("/<user_id>/credentials/change_password", methods=["POST"])
 def change_password(user_id):
     """
     Change a user's password by verifying the current password
@@ -156,7 +161,7 @@ def change_password(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/expire_password", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/expire_password", methods=["POST"])
 def expire_password(user_id):
     """
     Sets a user's password to expired so they
@@ -178,7 +183,7 @@ def expire_password(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/reset_password", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/reset_password", methods=["POST"])
 def reset_password(user_id):
     """
     Resets a user's password and emails a reset password link.
@@ -223,7 +228,33 @@ def delete_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/deactivate", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/activate", methods=["POST"])
+def activate_user(user_id):
+    """
+    Activates a user
+    """
+    app.logger.debug("activate_user({0})".format(user_id))
+    send_email = str(request.args.get("sendEmail")).lower()
+    if send_email == "false":
+        send_email = False
+    else:
+        send_email = True
+
+    try:
+        response = client.activate_user(user_id, send_email)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+@authenticated
+@bp.route("/<user_id>/lifecycle/deactivate", methods=["POST"])
 def deactivate_user(user_id):
     """
     Deactivates a user
@@ -243,7 +274,7 @@ def deactivate_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/suspend", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/suspend", methods=["POST"])
 def suspend_user(user_id):
     """
     Suspends a user
@@ -263,7 +294,7 @@ def suspend_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/unsuspend", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/unsuspend", methods=["POST"])
 def unsuspend_user(user_id):
     """
     Unsuspends a user
@@ -283,7 +314,7 @@ def unsuspend_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/unlock", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/unlock", methods=["POST"])
 def unlock_user(user_id):
     """
     Unlocks a user
@@ -303,7 +334,7 @@ def unlock_user(user_id):
 
 
 @authenticated
-@bp.route("/<user_id>/reset_factors", methods=["POST"])
+@bp.route("/<user_id>/lifecycle/reset_factors", methods=["POST"])
 def reset_factors(user_id):
     """
     Resets all factors for the given user
