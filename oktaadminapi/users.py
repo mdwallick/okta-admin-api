@@ -18,6 +18,8 @@ client = UsersClient(base_url=app.config.get("ORG_NAME"),
                      user_class=ExtendedUser)
 
 
+# CRUD operations
+
 @authenticated
 @bp.route("/<user_id>", methods=["GET"])
 def get_user(user_id):
@@ -72,28 +74,6 @@ def get_users():
 
 
 @authenticated
-@bp.route("/<user_id>/appLinks", methods=["GET"])
-def get_user_applinks(user_id):
-    """ get a user's application links """
-    app.logger.debug("get_user_applinks({0})".format)
-    try:
-        response = client.get_user_applinks(user_id)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
-
-
-# leave the url string empty if you just want to use
-# the blueprint's base URL, e.g. /api/v1/users
-
-
-@authenticated
 @bp.route("", methods=["POST"])
 def create_user():
     """ create a user """
@@ -138,6 +118,80 @@ def update_user(user_id):
 
 
 @authenticated
+@bp.route("/<user_id>", methods=["DELETE"])
+def delete_user(user_id):
+    """
+    Deletes a user
+
+    In its current implementation, this needs to be called
+    twice to actually delete the user. The first call just
+    deactivates the user
+    """
+    app.logger.debug("delete_user({0})".format(user_id))
+    try:
+        response = client.delete_user(user_id)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+# related operations
+
+@authenticated
+@bp.route("/<user_id>/appLinks", methods=["GET"])
+def get_user_applinks(user_id):
+    """ get a user's application links """
+    app.logger.debug("get_user_applinks({0})".format)
+    try:
+        response = client.get_user_applinks(user_id)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+@authenticated
+@bp.route("/<user_id>/groups", methods=["GET"])
+def get_user_groups(user_id):
+    """ get the groups a user belongs to """
+    app.logger.debug("get_user_groups({0})".format(user_id))
+    try:
+        response = client.get_user_groups(user_id)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+# credential operations
+
+@authenticated
+@bp.route("/<user_id>/credentials/forgot_password", methods=["POST"])
+def forgot_password(user_id):
+    """ starts the forgot password flow """
+    message = {
+        "error_summary": "Method not yet implemented"
+    }
+    return make_response(jsonify(message), 400)
+    
+
+@authenticated
 @bp.route("/<user_id>/credentials/change_password", methods=["POST"])
 def change_password(user_id):
     """
@@ -159,6 +213,24 @@ def change_password(user_id):
         }
         return make_response(jsonify(message), e.status_code)
 
+
+@authenticated
+@bp.route("/<user_id>/credentials/change_recovery_question", methods=["POST"])
+def change_recovery_question(user_id):
+    """
+    Change a user's password by verifying the current password
+    """
+    app.logger.debug("change_password({0})".format(user_id))
+    # body = request.get_json()
+    # password = body["password"] or None
+    # recovery_question = body["recovery_question"] or None
+    message = {
+        "error_summary": "Method not yet implemented"
+    }
+    return make_response(jsonify(message), 400)    
+
+
+# lifecycle operations
 
 @authenticated
 @bp.route("/<user_id>/lifecycle/expire_password", methods=["POST"])
@@ -192,30 +264,6 @@ def reset_password(user_id):
     app.logger.debug("reset_password({0})".format(user_id))
     try:
         response = client.reset_password(user_id, send_email)
-        return jsonify(response)
-    except OktaError as e:
-        message = {
-            "error_causes": e.error_causes,
-            "error_summary": e.error_summary,
-            "error_id": e.error_id,
-            "error_code": e.error_code
-        }
-        return make_response(jsonify(message), e.status_code)
-
-
-@authenticated
-@bp.route("/<user_id>", methods=["DELETE"])
-def delete_user(user_id):
-    """
-    Deletes a user
-
-    In its current implementation, this needs to be called
-    twice to actually delete the user. The first call just
-    deactivates the user
-    """
-    app.logger.debug("delete_user({0})".format(user_id))
-    try:
-        response = client.delete_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
