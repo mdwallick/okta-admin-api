@@ -14,8 +14,28 @@ client = FactorsClient(base_url=app.config.get("ORG_NAME"),
                        api_token=app.config.get("API_TOKEN"))
 
 
-@bp.route("/<user_id>/factors", methods=["GET"])
 @authenticated
+@bp.route("/<user_id>/factors/<factor_id>", methods=["GET"])
+def get_factor(user_id, factor_id):
+    """
+    Gets a factor
+    """
+    app.logger.debug("get_factor({0}, {1})".format(user_id, factor_id))
+    try:
+        response = client.get_factor(user_id, factor_id)
+        return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+@authenticated
+@bp.route("/<user_id>/factors", methods=["GET"])
 def get_enrolled_factors(user_id):
     """
     get enrolled factors
@@ -34,8 +54,8 @@ def get_enrolled_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@bp.route("/<user_id>/factors/catalog", methods=["GET"])
 @authenticated
+@bp.route("/<user_id>/factors/catalog", methods=["GET"])
 def get_available_factors(user_id):
     """
     get available factors
@@ -54,8 +74,8 @@ def get_available_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@bp.route("/<user_id>/factors/questions", methods=["GET"])
 @authenticated
+@bp.route("/<user_id>/factors/questions", methods=["GET"])
 def get_available_questions(user_id):
     """
     get all available security questions
@@ -257,6 +277,82 @@ def activate_totp(user_id, factor_id):
     try:
         response = client.activate_factor(user_id, factor_id, pass_code)
         return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+"""
+CHALLENGE/RESPONSE
+
+sms
+call
+email
+
+issue a challenge
+/<user_id>/factor/<factor_id>/verify
+
+verify a challenge
+/<user_id>/factor/<factor_id>/verify
+passCode in the body
+
+PUSH
+issue a challenge
+/<user_id>/factor/<factor_id>/verify
+
+POLL for response
+/<user_id>/factor/<factor_id>/transactions/<transaction_id>
+
+NO CHALLENGE, JUST A RESPONSE
+
+question
+/<user_id>/factor/<factor_id>/verify
+answer in the body
+
+TOTP (token:software:totp or token:hotp)
+Token (token or token:hardware)
+Yubikey (token:hardware)
+/<user_id>/factor/<factor_id>/verify
+passCode in the body
+
+"""
+
+
+@authenticated
+@bp.route("/<user_id>/factor/<factor_id>/verify", methods=["POST"])
+def verify_factor(user_id, factor_id):
+    """
+    Verify a factor challenge
+    """
+    answer = None
+    pass_code = None
+    body = request.get_json() or None
+
+    try:
+        if body is not None:
+            if body.get("answer"):
+                answer = body.get("answer")
+                response = client.verify_factor(user_id, factor_id, answer=answer)
+                return jsonify(response)
+            elif body.get("passCode"):
+                pass_code = body.get("passCode")
+                response = client.verify_factor(user_id, factor_id, passcode=pass_code)
+                return jsonify(response)
+            else:
+                message = {
+                    "error_summary": "unknown parameters in request body",
+                    "error_causes": jsonify(body)
+                }
+                return make_response(jsonify(message), 400)
+        else:
+            # no request body, start a challenge/response cycle
+            response = client.verify_factor(user_id, factor_id)
+            return jsonify(response)
     except OktaError as e:
         message = {
             "error_causes": e.error_causes,
