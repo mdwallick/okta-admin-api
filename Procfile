@@ -1,1 +1,1 @@
-web: gunicorn oktaadminapi
+web: gunicorn oktaadminapi:create_app
