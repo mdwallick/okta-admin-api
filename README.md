@@ -31,8 +31,8 @@ Developer tenants will have API Access Management available.
 Copy `.env.example` to `.env` and fill out your configuration details.
 
 ```shell
-OKTA_ORG_NAME=https://<ORG_NAME>.okta.com
-OKTA_API_TOKEN=
+ORG_NAME=https://<ORG_NAME>.okta.com
+API_TOKEN=
 ISSUER=https://<ORG_NAME>.okta.com/oauth2/default
 AUDIENCE=api://default
 CLIENT_ID=
