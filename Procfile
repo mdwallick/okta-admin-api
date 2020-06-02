@@ -1,1 +1,1 @@
-web: gunicorn oktaadminapi:app
+web: gunicorn oktaadminapi
