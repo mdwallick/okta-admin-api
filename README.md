@@ -40,10 +40,70 @@ CLIENT_SECRET=If using PKCE, then this variable is not needed
 LOG_LEVEL=DEBUG|INFO|WARNING|ERROR
 ```
 
-Run the server locally. The default port is 3000.
+Run the server locally. The default port is 8000.
 
 ```shell
 python application.py
+```
+
+If you have extended the Okta user profile and wish to see/use those new fields,
+you need to subclass the base User and UserProfile classes and pass your new
+user class name into the call to `create_app`.
+
+For running locally:
+
+```python
+# application.py
+import os
+from oktaadminapi import create_app
+
+# import your User subclass
+from okta_class_extensions import ExtendedUser
+
+if __name__ == "__main__":
+    # config_class defaults to "config.ProdConfig" if not specified
+    # user_class defaults to "User" if not specified
+    app = create_app(config_class="config.DevConfig", user_class=ExtendedUser)
+    app.run(host=os.getenv("IP", "0.0.0.0"), port=int(os.getenv("PORT", 8000)), debug=True)
+```
+
+Using wsgi.py (AWS Elastic Beanstalk, e.g.)
+
+```python
+# wsgi.py
+from oktaadminapi import create_app
+from okta_class_extensions import ExtendedUser
+
+app = create_app(user_class=ExtendedUser)
+```
+
+Example subclasses are in `okta_class_extensions.py`.
+
+```python
+# okta_class_extensions.py
+from okta.models.user.User import User
+from okta.models.user.UserProfile import UserProfile
+
+class ExtendedUser(User):
+    def __init__(self, **kwargs):
+        self.types["profile"] = ExtendedUserProfile
+        self.profile = ExtendedUserProfile()
+        self.set_profile(**kwargs)
+
+
+class ExtendedUserProfile(UserProfile):
+    # My Okta user profile has two extra fields
+    types = {
+        'windows_username': str,
+        'sfdc_id': str
+    }
+
+    def __init__(self):
+        # merge the types dict from super
+        self.types.update(super().types)
+
+        self.windows_username = None
+        self.sfdc_id = None
 ```
 
 ## APIs Implemented
