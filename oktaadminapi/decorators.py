@@ -70,16 +70,12 @@ def is_operation_allowed(token):
     app.logger.debug("is_operation_allowed()")
     issuer = app.config.get("ISSUER")
     audience = app.config.get("AUDIENCE")
-    client_id = app.config.get("CLIENT_ID")
-    client_secret = app.config.get("CLIENT_SECRET")
-    cache_method = app.config.get("CACHE_METHOD", "file")
-    bucket_name = app.config.get("S3_BUCKET", None)
+    cache_method = app.config.get("CACHE_METHOD")
+    bucket_name = app.config.get("BUCKET_NAME")
 
     try:
-        jwtVerifier = JwtVerifier(issuer=issuer, client_id=client_id,
-                                  client_secret=client_secret, cache_method=cache_method,
-                                  bucket_name=bucket_name)
-        claims = jwtVerifier.verify(token, audience)
+        jwtVerifier = JwtVerifier(issuer, audience, cache_method=cache_method, bucket_name=bucket_name)
+        claims = jwtVerifier.verify(token)
         # should we check extra scopes or anything like that?
         return claims["iss"] == issuer and claims["aud"] == audience
     except Exception as e:
