@@ -12,8 +12,6 @@ class Config:
     API_TOKEN = environ.get("API_TOKEN")
     ISSUER = environ.get("ISSUER")
     AUDIENCE = environ.get("AUDIENCE")
-    CLIENT_ID = environ.get("CLIENT_ID")
-    CLIENT_SECRET = environ.get("CLIENT_SECRET", None)
     CACHE_METHOD = environ.get("CACHE_METHOD", "file")
     BUCKET_NAME = environ.get("S3_BUCKET", None)
 
@@ -30,5 +28,4 @@ class DevConfig(Config):
     FLASK_ENV = "development"
     DEBUG = True
     TESTING = True
-
     LOG_LEVEL = environ.get("LOG_LEVEL", "DEBUG")
