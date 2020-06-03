@@ -14,8 +14,8 @@ client = FactorsClient(base_url=app.config.get("ORG_NAME"),
                        api_token=app.config.get("API_TOKEN"))
 
 
-@authenticated
 @bp.route("/<user_id>/factors/<factor_id>", methods=["GET"])
+@authenticated
 def get_factor(user_id, factor_id):
     """
     Gets a factor
@@ -34,8 +34,8 @@ def get_factor(user_id, factor_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/factors", methods=["GET"])
+@authenticated
 def get_enrolled_factors(user_id):
     """
     get enrolled factors
@@ -54,8 +54,8 @@ def get_enrolled_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/factors/catalog", methods=["GET"])
+@authenticated
 def get_available_factors(user_id):
     """
     get available factors
@@ -74,8 +74,8 @@ def get_available_factors(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/factors/questions", methods=["GET"])
+@authenticated
 def get_available_questions(user_id):
     """
     get all available security questions
@@ -94,9 +94,9 @@ def get_available_questions(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/factors/<factor_type>", methods=["POST"])
 @bp.route("/<user_id>/factors/<factor_type>/<provider>", methods=["POST"])
+@authenticated
 def enroll_factor(user_id, factor_type, provider="OKTA"):
     """
     Main entry point for enrolling a factor
@@ -246,8 +246,8 @@ def enroll_push(user_id):
     return __enroll_factor(user_id, enroll_request)
 
 
+@bp.route("/<user_id>/factors/<factor_id>/activate/push", methods=["POST"])
 @authenticated
-@bp.route("/<user_id>/factor/<factor_id>/activate/push", methods=["POST"])
 def poll_push_activation(user_id, factor_id):
     app.logger.debug("poll_push_activation({0}, {1})".format(user_id, factor_id))
     body = request.get_json()
@@ -265,8 +265,8 @@ def poll_push_activation(user_id, factor_id):
         return make_response(jsonify(message), e.status_code)
 
 
+@bp.route("/<user_id>/factors/<factor_id>/activate/totp", methods=["POST"])
 @authenticated
-@bp.route("/<user_id>/factor/<factor_id>/activate/totp", methods=["POST"])
 def activate_totp(user_id, factor_id):
     """
     Activate SMS, voice, Google Authenticator or email factors
@@ -323,8 +323,8 @@ passCode in the body
 """
 
 
+@bp.route("/<user_id>/factors/<factor_id>/verify", methods=["POST"])
 @authenticated
-@bp.route("/<user_id>/factor/<factor_id>/verify", methods=["POST"])
 def verify_factor(user_id, factor_id):
     """
     Verify a factor challenge
