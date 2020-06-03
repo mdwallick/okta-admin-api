@@ -36,7 +36,8 @@ def authenticated(f):
     def decorated_function(*args, **kws):
         app.logger.debug("authenticated()")
 
-        # Just validate they have a legit token. Any additional access rules will be by another wrapper
+        # Just validate they have a legit token.
+        # Any additional access rules will be by another wrapper
         access_token = get_access_token()
         if is_operation_allowed(access_token):
             return f(*args, **kws)
@@ -51,7 +52,9 @@ def get_access_token():
     authorization_header = request.headers.get("authorization")
     app.logger.debug("Authorization header {0}".format(authorization_header))
 
-    if authorization_header != None:
+    if authorization_header == None:
+        abort(401)
+    else:
         header = "Bearer"
         bearer, access_token = authorization_header.split(" ")
         if bearer != header:

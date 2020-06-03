@@ -20,8 +20,8 @@ client = UsersClient(base_url=app.config.get("ORG_NAME"),
 
 # CRUD operations
 
-@authenticated
 @bp.route("/<user_id>", methods=["GET"])
+@authenticated
 def get_user(user_id):
     """ get a user """
     app.logger.debug("get_user({0})".format(user_id))
@@ -38,8 +38,8 @@ def get_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("", methods=["GET"])
+@authenticated
 def get_users():
     """
     Gets a list of users
@@ -73,8 +73,8 @@ def get_users():
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("", methods=["POST"])
+@authenticated
 def create_user():
     """ create a user """
     app.logger.debug("create_user()")
@@ -98,8 +98,8 @@ def create_user():
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>", methods=["PUT"])
+@authenticated
 def update_user(user_id):
     """ update a user """
     app.logger.debug("update_user({0})".format(user_id))
@@ -117,8 +117,8 @@ def update_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>", methods=["DELETE"])
+@authenticated
 def delete_user(user_id):
     """
     Deletes a user
@@ -143,8 +143,8 @@ def delete_user(user_id):
 
 # related operations
 
-@authenticated
 @bp.route("/<user_id>/appLinks", methods=["GET"])
+@authenticated
 def get_user_applinks(user_id):
     """ get a user's application links """
     app.logger.debug("get_user_applinks({0})".format)
@@ -161,8 +161,8 @@ def get_user_applinks(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/groups", methods=["GET"])
+@authenticated
 def get_user_groups(user_id):
     """ get the groups a user belongs to """
     app.logger.debug("get_user_groups({0})".format(user_id))
@@ -181,8 +181,8 @@ def get_user_groups(user_id):
 
 # credential operations
 
-@authenticated
 @bp.route("/<user_id>/credentials/forgot_password", methods=["POST"])
+@authenticated
 def forgot_password(user_id):
     """ starts the forgot password flow """
     message = {
@@ -191,8 +191,8 @@ def forgot_password(user_id):
     return make_response(jsonify(message), 400)
     
 
-@authenticated
 @bp.route("/<user_id>/credentials/change_password", methods=["POST"])
+@authenticated
 def change_password(user_id):
     """
     Change a user's password by verifying the current password
@@ -214,8 +214,8 @@ def change_password(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/credentials/change_recovery_question", methods=["POST"])
+@authenticated
 def change_recovery_question(user_id):
     """
     Change a user's password by verifying the current password
@@ -232,8 +232,8 @@ def change_recovery_question(user_id):
 
 # lifecycle operations
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/expire_password", methods=["POST"])
+@authenticated
 def expire_password(user_id):
     """
     Sets a user's password to expired so they
@@ -254,8 +254,8 @@ def expire_password(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/reset_password", methods=["POST"])
+@authenticated
 def reset_password(user_id):
     """
     Resets a user's password and emails a reset password link.
@@ -275,8 +275,8 @@ def reset_password(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/activate", methods=["POST"])
+@authenticated
 def activate_user(user_id):
     """
     Activates a user
@@ -301,8 +301,8 @@ def activate_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/deactivate", methods=["POST"])
+@authenticated
 def deactivate_user(user_id):
     """
     Deactivates a user
@@ -321,8 +321,8 @@ def deactivate_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/suspend", methods=["POST"])
+@authenticated
 def suspend_user(user_id):
     """
     Suspends a user
@@ -341,8 +341,8 @@ def suspend_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/unsuspend", methods=["POST"])
+@authenticated
 def unsuspend_user(user_id):
     """
     Unsuspends a user
@@ -361,8 +361,8 @@ def unsuspend_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/unlock", methods=["POST"])
+@authenticated
 def unlock_user(user_id):
     """
     Unlocks a user
@@ -381,8 +381,8 @@ def unlock_user(user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<user_id>/lifecycle/reset_factors", methods=["POST"])
+@authenticated
 def reset_factors(user_id):
     """
     Resets all factors for the given user

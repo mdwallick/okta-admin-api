@@ -4,12 +4,12 @@ from flask import Flask
 from flask_cors import CORS
 from okta.framework.Serializer import Serializer
 
-def create_app():
+def create_app(config_class="config.ProdConfig"):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.json_encoder = Serializer
     CORS(app)
-    app.config.from_object("config.DevConfig")
+    app.config.from_object(config_class)
 
     with app.app_context():
         logger = logging.getLogger(__name__)

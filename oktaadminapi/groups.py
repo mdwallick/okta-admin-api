@@ -15,8 +15,8 @@ client = UserGroupsClient(base_url=app.config.get("ORG_NAME"),
                           api_token=app.config.get("API_TOKEN"))
 
 
-@authenticated
 @bp.route("/<group_id>", methods=["GET"])
+@authenticated
 def get_group(group_id):
     """ get a group """
     app.logger.debug("get_group({0})".format(group_id))
@@ -33,8 +33,8 @@ def get_group(group_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<group_id>/users", methods=["GET"])
+@authenticated
 def get_group_users(group_id):
     """ get users in a group """
     app.logger.debug("get_group_users({0})".format(group_id))
@@ -51,8 +51,8 @@ def get_group_users(group_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<group_id>/users/<user_id>", methods=["PUT"])
+@authenticated
 def add_user_to_group(group_id, user_id):
     """ adds a user to a group """
     app.logger.debug("add_user_to_group({0}, {1})".format(group_id, user_id))
@@ -69,8 +69,8 @@ def add_user_to_group(group_id, user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<group_id>/users/<user_id>", methods=["DELETE"])
+@authenticated
 def remove_user_from_group(group_id, user_id):
     """ removes a user from a group """
     app.logger.debug("remove_user_from_group({0}, {1})".format(group_id, user_id))
@@ -87,8 +87,8 @@ def remove_user_from_group(group_id, user_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("", methods=["GET"])
+@authenticated
 def get_groups():
     """
     Get a list of groups
@@ -118,8 +118,8 @@ def get_groups():
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("", methods=["POST"])
+@authenticated
 def create_group():
     """ create a group """
     app.logger.debug("create_group()")
@@ -137,8 +137,8 @@ def create_group():
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<group_id>", methods=["PUT"])
+@authenticated
 def update_group(group_id):
     """ update a group """
     app.logger.debug("update_group({0})".format(group_id))
@@ -156,8 +156,8 @@ def update_group(group_id):
         return make_response(jsonify(message), e.status_code)
 
 
-@authenticated
 @bp.route("/<group_id>", methods=["DELETE"])
+@authenticated
 def delete_group(group_id):
     """
     Deletes a group
