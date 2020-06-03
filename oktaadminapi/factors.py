@@ -1,6 +1,6 @@
-# routes for the factors API endpoints
 from flask import Blueprint, jsonify, make_response, request
 from flask import current_app as app
+from flask_api import status
 
 from okta.FactorsClient import FactorsClient
 from okta.framework.OktaError import OktaError
@@ -132,7 +132,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             message = {
                 "error_summary": "A question and answer are required"
             }
-            return make_response(jsonify(message), 400)
+            return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
         return enroll_question(user_id, question, answer)
     elif factor_type == "sms" or factor_type == "call":
@@ -142,7 +142,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             message = {
                 "error_summary": "A phone number is required"
             }
-            return make_response(jsonify(message), 400)
+            return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
         return enroll_phone_factor(user_id, factor_type, phone_number)
     elif factor_type == "email":
@@ -152,7 +152,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             message = {
                 "error_summary": "An email address is required"
             }
-            return make_response(jsonify(message), 400)
+            return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
         return enroll_email(user_id, email)
     elif factor_type == "token:software:totp":
@@ -162,7 +162,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             message = {
                 "error_summary": "Provider must be one of Okta or Google"
             }
-            return make_response(jsonify(message), 400)
+            return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
     elif factor_type == "push":
         return enroll_push(user_id)
@@ -171,7 +171,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
         message = {
             "error_summary": error
         }
-        return make_response(jsonify(message), 400)
+        return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
 
 def __enroll_factor(user_id, enroll_request):
@@ -348,7 +348,7 @@ def verify_factor(user_id, factor_id):
                     "error_summary": "unknown parameters in request body",
                     "error_causes": jsonify(body)
                 }
-                return make_response(jsonify(message), 400)
+                return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
         else:
             # no request body, start a challenge/response cycle
             response = client.verify_factor(user_id, factor_id)
