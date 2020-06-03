@@ -30,6 +30,11 @@ class TestVerifier(unittest.TestCase):
         response = self.client.get(uri)
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
 
+    def test_get_paged_users_no_token_returns_unauthorized(self):
+        uri = "/api/v1/users/search?limit=1"
+        response = self.client.get(uri)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
     def test_create_user_no_token_returns_unauthorized(self):
         uri = "/api/v1/users"
         response = self.client.post(uri)

@@ -1,1 +1,1 @@
-web: gunicorn 'oktaadminapi:create_app()'
+web: gunicorn wsgi:app

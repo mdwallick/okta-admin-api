@@ -1,24 +1,18 @@
-# routes for the user API endpoints
-# TODO implement the rest of the user API endpoints
-#       get_paged_users
-
 from flask import Blueprint, jsonify, make_response, request
 from flask import current_app as app
+from flask_api import status
 
 from okta.framework.OktaError import OktaError
+from okta.framework.Serializer import Serializer
 from okta.UsersClient import UsersClient
 from okta.models.user.User import User
 
 from oktaadminapi.decorators import authenticated
-from oktaadminapi.okta_class_extensions import ExtendedUser
 
 bp = Blueprint("users", __name__)
-client = UsersClient(base_url=app.config.get("ORG_NAME"),
-                     api_token=app.config.get("API_TOKEN"),
-                     user_class=ExtendedUser)
-
 
 # CRUD operations
+
 
 @bp.route("/<user_id>", methods=["GET"])
 @authenticated
@@ -26,7 +20,7 @@ def get_user(user_id):
     """ get a user """
     app.logger.debug("get_user({0})".format(user_id))
     try:
-        response = client.get_user(user_id)
+        response = app.usersClient.get_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -61,8 +55,34 @@ def get_users():
     query = request.args.get("query") or None
     filter_string = request.args.get("filter") or None
     try:
-        response = client.get_users(limit=limit, query=query, filter_string=filter_string)
+        response = app.usersClient.get_users(limit=limit, query=query, filter_string=filter_string)
         return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+@bp.route("/search", methods=["GET"])
+@authenticated
+def get_paged_users():
+    limit = request.args.get("limit") or None
+    filter_string = request.args.get("filter") or None
+    after = request.args.get("after") or None
+    url = request.args.get("url") or None
+    try:
+        if url != None:
+            response = app.usersClient.get_paged_users(url=url)
+        else:
+            response = app.usersClient.get_paged_users(limit=limit, filter_string=filter_string, after=after)
+
+        resp = make_response(jsonify(response.result), status.HTTP_200_OK)
+        resp.headers["Link"] = "<{0}>; rel=\"next\"".format(response.next_url)
+        return resp
     except OktaError as e:
         message = {
             "error_causes": e.error_causes,
@@ -86,7 +106,7 @@ def create_user():
         activate = True
 
     try:
-        response = client.create_user(user, activate)
+        response = app.usersClient.create_user(user, activate)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -105,7 +125,7 @@ def update_user(user_id):
     app.logger.debug("update_user({0})".format(user_id))
     user = request.get_json()
     try:
-        response = client.update_user_by_id(user_id, user)
+        response = app.usersClient.update_user_by_id(user_id, user)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -129,7 +149,7 @@ def delete_user(user_id):
     """
     app.logger.debug("delete_user({0})".format(user_id))
     try:
-        response = client.delete_user(user_id)
+        response = app.usersClient.delete_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -149,7 +169,7 @@ def get_user_applinks(user_id):
     """ get a user's application links """
     app.logger.debug("get_user_applinks({0})".format)
     try:
-        response = client.get_user_applinks(user_id)
+        response = app.usersClient.get_user_applinks(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -167,7 +187,7 @@ def get_user_groups(user_id):
     """ get the groups a user belongs to """
     app.logger.debug("get_user_groups({0})".format(user_id))
     try:
-        response = client.get_user_groups(user_id)
+        response = app.usersClient.get_user_groups(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -188,8 +208,8 @@ def forgot_password(user_id):
     message = {
         "error_summary": "Method not yet implemented"
     }
-    return make_response(jsonify(message), 400)
-    
+    return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
+
 
 @bp.route("/<user_id>/credentials/change_password", methods=["POST"])
 @authenticated
@@ -202,7 +222,7 @@ def change_password(user_id):
     old_password = body["oldPassword"] or None
     new_password = body["newPassword"] or None
     try:
-        response = client.change_password(user_id, old_password, new_password)
+        response = app.usersClient.change_password(user_id, old_password, new_password)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -227,7 +247,7 @@ def change_recovery_question(user_id):
     message = {
         "error_summary": "Method not yet implemented"
     }
-    return make_response(jsonify(message), 400)    
+    return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
 
 # lifecycle operations
@@ -242,7 +262,7 @@ def expire_password(user_id):
     temp_password = (request.args.get("tempPassword") == True) or False
     app.logger.debug("expire_password({0})".format(user_id))
     try:
-        response = client.expire_password(user_id, temp_password)
+        response = app.usersClient.expire_password(user_id, temp_password)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -263,7 +283,7 @@ def reset_password(user_id):
     send_email = (request.args.get("sendEmail") == True) or False
     app.logger.debug("reset_password({0})".format(user_id))
     try:
-        response = client.reset_password(user_id, send_email)
+        response = app.usersClient.reset_password(user_id, send_email)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -289,7 +309,7 @@ def activate_user(user_id):
         send_email = True
 
     try:
-        response = client.activate_user(user_id, send_email)
+        response = app.usersClient.activate_user(user_id, send_email)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -309,7 +329,7 @@ def deactivate_user(user_id):
     """
     app.logger.debug("deactivate_user({0}".format(user_id))
     try:
-        response = client.deactivate_user(user_id)
+        response = app.usersClient.deactivate_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -329,7 +349,7 @@ def suspend_user(user_id):
     """
     app.logger.debug("suspend_user({0}".format(user_id))
     try:
-        response = client.suspend_user(user_id)
+        response = app.usersClient.suspend_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -349,7 +369,7 @@ def unsuspend_user(user_id):
     """
     app.logger.debug("unsuspend_user({0}".format(user_id))
     try:
-        response = client.unsuspend_user(user_id)
+        response = app.usersClient.unsuspend_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -369,7 +389,7 @@ def unlock_user(user_id):
     """
     app.logger.debug("unlock_user({0}".format(user_id))
     try:
-        response = client.unlock_user(user_id)
+        response = app.usersClient.unlock_user(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
@@ -389,7 +409,7 @@ def reset_factors(user_id):
     """
     app.logger.debug("reset_factors({0}".format(user_id))
     try:
-        response = client.reset_factors(user_id)
+        response = app.usersClient.reset_factors(user_id)
         return jsonify(response)
     except OktaError as e:
         message = {
