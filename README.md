@@ -35,8 +35,6 @@ ORG_NAME=https://<ORG_NAME>.okta.com
 API_TOKEN=
 ISSUER=https://<ORG_NAME>.okta.com/oauth2/default
 AUDIENCE=api://default
-CLIENT_ID=
-CLIENT_SECRET=If using PKCE, then this variable is not needed
 LOG_LEVEL=DEBUG|INFO|WARNING|ERROR
 ```
 
