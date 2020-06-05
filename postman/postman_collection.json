@@ -1,0 +1,1124 @@
+{
+	"info": {
+		"_postman_id": "d7a7f6b8-7c8a-45fc-82d4-47c02f65dde8",
+		"name": "OAuth Okta Admin API",
+		"description": "This collection goes with the [okta-admin-api](https://github.com/mdwallick/okta-admin-api) project. It is a simple Flask server fronting a subset of the Okta administration APIs (Users, Groups, Factors) using OAuth. The intent was to give user profile and factor management APIs to public clients (e.g. SPAs or native mobile apps) without having to put an Okta API key in the app itself.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Users",
+			"item": [
+				{
+					"name": "Get User by ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by username",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userName}}{{email-suffix}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userName}}{{email-suffix}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/search?limit=2",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"search"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get User's Groups",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/groups",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create User w/out credentials",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profile\": {\n        \"email\": \"testuser999{{email-suffix}}\",\n        \"firstName\": \"Test\",\n        \"lastName\": \"User 999\",\n        \"login\": \"testuser999{{email-suffix}}\"\n    },\n\t\"groupIds\": [\n    \t\"{{groupId}}\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users?activate=false",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users"
+							],
+							"query": [
+								{
+									"key": "activate",
+									"value": "false"
+								}
+							]
+						},
+						"description": "This will create a user that needs to be activated before they can log in."
+					},
+					"response": []
+				},
+				{
+					"name": "Create User w/password and recovery question",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profile\": {\n        \"email\": \"testuser{{email-suffix}}\",\n        \"firstName\": \"Les\",\n        \"lastName\": \"Claypool\",\n        \"login\": \"testuser{{email-suffix}}\"\n    },\n\t\"credentials\": {\n\t\t\"password\" : {\n\t\t\t\"value\": \"correcthorsebatterystaple\"\n\t\t},\n\t\t\"recovery_question\": {\n\t\t\t\"question\": \"What time is it?\",\n\t\t\t\"answer\": \"4:30\"\n\t\t}\n\t},\n\t\"groupIds\": [\n    \t\"{{groupId}}\"\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "This will create a new user that can immediately log in with the given password."
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"profile\": {\n    \"secondEmail\": \"testuser-alternate{{email-suffix}}\",\n    \"title\": \"Senior Fisherman\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activate User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/activate?sendEmail=false",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"activate"
+							],
+							"query": [
+								{
+									"key": "sendEmail",
+									"value": "false"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Deactivate User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/deactivate",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"deactivate"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Suspend User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/suspend",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"suspend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unsuspend User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/unsuspend",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"unsuspend"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Unlock User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/unlock",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"unlock"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Factors",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/lifecycle/reset_factors",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"lifecycle",
+								"reset_factors"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Factors",
+			"item": [
+				{
+					"name": "Get Factor",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Enrolled Factors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Available Factors",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/catalog",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"catalog"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Available Security Questions",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/questions",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"questions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Activate TOTP Factor",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"passCode\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/activate/totp",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"activate",
+								"totp"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Email Address",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"testuser{{email-suffix}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/email",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"email"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Google Authenticator",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/totp/google",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"totp",
+								"google"
+							]
+						},
+						"description": "Enrolls Okta Verify OTP (not push) or Google Authenticator"
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Okta Verify OTP",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/totp/okta",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"totp",
+								"okta"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Okta Verify Push",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/push",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Poll for Push Enrollment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"pollingUrl\": \"{{pollingUrl}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/activate/push",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"activate",
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Poll for Push Verification",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"pollingUrl\": \"{{pollingUrl}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/verify/push",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"verify",
+								"push"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Security Question",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"question\": \"disliked_food\",\n\t\"answer\": \"peas\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/question",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"question"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll SMS",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/sms",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"sms"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Enroll Voice Call",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"phoneNumber\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/call",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"call"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Security Question",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"answer\": \"peas\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/verify",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify TOTP Factor",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"passCode\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/verify",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Send Challenge",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factors/{{factorId}}/verify",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factors",
+								"{{factorId}}",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Challenge",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"passCode\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/users/{{userId}}/factor/{{factorId}}/verify",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}",
+								"factor",
+								"{{factorId}}",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "Groups",
+			"item": [
+				{
+					"name": "Create Group",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"profile\": {\n        \"name\": \"Test Group 20\",\n        \"description\": \"Just a test group from oktaadminapi\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/groups",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Groups",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/groups",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Group Members",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}/users",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}",
+								"users"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Group",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"profile\": {\n    \"name\": \"Test Group 200\",\n    \"description\": \"Updated description\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add User to Group",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}/users/{{userId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Group",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove User from Group",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{apiUrl}}/groups/{{groupId}}/users/{{userId}}",
+							"host": [
+								"{{apiUrl}}"
+							],
+							"path": [
+								"groups",
+								"{{groupId}}",
+								"users",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"auth": {
+		"type": "oauth2",
+		"oauth2": [
+			{
+				"key": "accessToken",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "tokenType",
+				"value": "Bearer",
+				"type": "string"
+			},
+			{
+				"key": "addTokenTo",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "3bc63ad1-a166-48d2-944c-485ae52da9ef",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "5442ccbd-dc84-4302-a652-1f1da6d6de50",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
