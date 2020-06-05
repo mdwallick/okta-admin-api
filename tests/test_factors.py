@@ -61,6 +61,11 @@ class TestVerifier(unittest.TestCase):
         response = self.client.post(uri)
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
 
+    def test_poll_push_verification_no_token_returns_unauthorized(self):
+        uri = "/api/v1/users/{0}/factors/{1}/verify/push".format(self.user_id, self.factor_id)
+        response = self.client.post(uri)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
     # def test_get_factor_with_invalid_id_returns_404(self):
     #     uri = "/api/v1/users/{0}/factors/{1}".format(self.user_id, self.not_a_real_factor_id)
     #     response = self.client.get(uri)
