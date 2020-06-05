@@ -134,7 +134,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             }
             return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
-        return enroll_question(user_id, question, answer)
+        return __enroll_question(user_id, question, answer)
     elif factor_type == "sms" or factor_type == "call":
         phone_number = body.get("phoneNumber")
 
@@ -144,7 +144,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             }
             return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
-        return enroll_phone_factor(user_id, factor_type, phone_number)
+        return __enroll_phone_factor(user_id, factor_type, phone_number)
     elif factor_type == "email":
         email = body.get("email")
 
@@ -154,10 +154,10 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             }
             return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
-        return enroll_email(user_id, email)
+        return __enroll_email(user_id, email)
     elif factor_type == "token:software:totp":
         if provider == "OKTA" or provider == "GOOGLE":
-            return enroll_totp(user_id, provider)
+            return __enroll_totp(user_id, provider)
         else:
             message = {
                 "error_summary": "Provider must be one of Okta or Google"
@@ -165,7 +165,7 @@ def enroll_factor(user_id, factor_type, provider="OKTA"):
             return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
 
     elif factor_type == "push":
-        return enroll_push(user_id)
+        return __enroll_push(user_id)
     else:
         error = "Factor type {0} is not supported".format(factor_type)
         message = {
@@ -188,7 +188,7 @@ def __enroll_factor(user_id, enroll_request):
         return make_response(jsonify(message), e.status_code)
 
 
-def enroll_question(user_id, question, answer):
+def __enroll_question(user_id, question, answer):
     app.logger.debug("enroll_question({0}, {1}, ****)".format(user_id, question))
     enroll_request = {
         "factorType": "question",
@@ -201,7 +201,7 @@ def enroll_question(user_id, question, answer):
     return __enroll_factor(user_id, enroll_request)
 
 
-def enroll_phone_factor(user_id, factor_type, phone_number):
+def __enroll_phone_factor(user_id, factor_type, phone_number):
     app.logger.debug("enroll_sms({0}, {1})".format(user_id, phone_number))
     enroll_request = {
         "factorType": factor_type,
@@ -213,7 +213,7 @@ def enroll_phone_factor(user_id, factor_type, phone_number):
     return __enroll_factor(user_id, enroll_request)
 
 
-def enroll_email(user_id, email):
+def __enroll_email(user_id, email):
     app.logger.debug("enroll_email({0})".format(user_id))
     enroll_request = {
         "factorType": "email",
@@ -225,7 +225,7 @@ def enroll_email(user_id, email):
     return __enroll_factor(user_id, enroll_request)
 
 
-def enroll_totp(user_id, provider):
+def __enroll_totp(user_id, provider):
     """
     Enrolls Okta Verify OTP (not push) or Google Authenticator
     """
@@ -237,7 +237,7 @@ def enroll_totp(user_id, provider):
     return __enroll_factor(user_id, enroll_request)
 
 
-def enroll_push(user_id):
+def __enroll_push(user_id):
     app.logger.debug("enroll_push({0})".format(user_id))
     enroll_request = {
         "factorType": "push",
@@ -252,6 +252,13 @@ def poll_push_activation(user_id, factor_id):
     app.logger.debug("poll_push_activation({0}, {1})".format(user_id, factor_id))
     body = request.get_json()
     poll_url = body.get("pollingUrl")
+
+    if not poll_url:
+        message = {
+            "error_summary": "Polling URL was not specified"
+        }
+        return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
+
     try:
         response = client.push_activation_poll(poll_url)
         return jsonify(response)
@@ -274,6 +281,13 @@ def activate_totp(user_id, factor_id):
     app.logger.debug("activate_totp({0}, {1})".format(user_id, factor_id))
     body = request.get_json()
     pass_code = body.get("passCode")
+
+    if not pass_code:
+        message = {
+            "error_summary": "passCode was not specified"
+        }
+        return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
+
     try:
         response = client.activate_factor(user_id, factor_id, pass_code)
         return jsonify(response)
@@ -353,6 +367,32 @@ def verify_factor(user_id, factor_id):
             # no request body, start a challenge/response cycle
             response = client.verify_factor(user_id, factor_id)
             return jsonify(response)
+    except OktaError as e:
+        message = {
+            "error_causes": e.error_causes,
+            "error_summary": e.error_summary,
+            "error_id": e.error_id,
+            "error_code": e.error_code
+        }
+        return make_response(jsonify(message), e.status_code)
+
+
+@bp.route("/<user_id>/factors/<factor_id>/verify/push", methods=["POST"])
+@authenticated
+def poll_push_verification(user_id, factor_id):
+    app.logger.debug("poll_push_verification({0}, {1})".format(user_id, factor_id))
+    body = request.get_json()
+    poll_url = body.get("pollingUrl")
+
+    if not poll_url:
+        message = {
+            "error_summary": "Polling URL was not specified"
+        }
+        return make_response(jsonify(message), status.HTTP_400_BAD_REQUEST)
+
+    try:
+        response = client.push_verification_poll(poll_url)
+        return jsonify(response)
     except OktaError as e:
         message = {
             "error_causes": e.error_causes,
