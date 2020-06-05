@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 
@@ -26,21 +27,19 @@ def not_authorized(error):
 @app.errorhandler(404)
 def not_found(error):
     message = {
-        "error": "Not found"
+        "error": "Not found",
+        "message": "The resource you requested could not be found"
     }
     return make_response(jsonify(message), 404)
 
 
 def authenticated(f):
     @wraps(f)
-    def decorated_function(*args, **kws):
-        app.logger.debug("authenticated()")
-
-        # Just validate they have a legit token.
-        # Any additional access rules will be by another wrapper
+    def decorated_function(*args, **kwargs):
+        # Just validate they have a legit token
         access_token = get_access_token()
         if is_operation_allowed(access_token):
-            return f(*args, **kws)
+            return f(*args, **kwargs)
         else:
             abort(401)
 
@@ -67,7 +66,6 @@ def is_operation_allowed(token):
     """
     Given the information in token, is this transaction authorized.
     """
-    app.logger.debug("is_operation_allowed()")
     issuer = app.config.get("ISSUER")
     audience = app.config.get("AUDIENCE")
     cache_method = app.config.get("CACHE_METHOD")
@@ -76,8 +74,9 @@ def is_operation_allowed(token):
     try:
         jwtVerifier = JwtVerifier(issuer, audience, cache_method=cache_method, bucket_name=bucket_name)
         claims = jwtVerifier.verify(token)
+        app.logger.debug("Claims: {0}".format(json.dumps(claims, indent=2)))
         # should we check extra scopes or anything like that?
-        return claims["iss"] == issuer and claims["aud"] == audience
+        return claims.get("iss") == issuer and claims.get("aud") == audience
     except Exception as e:
         app.logger.error(e)
         return False
