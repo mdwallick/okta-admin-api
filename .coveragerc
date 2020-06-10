@@ -1,0 +1,3 @@
+[run]
+source = oktaadminapi/
+omit = venv/*
