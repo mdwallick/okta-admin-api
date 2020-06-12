@@ -8,7 +8,7 @@ from unittest.mock import Mock, patch
 from oktaadminapi import create_app
 
 
-class TestVerifier(unittest.TestCase):
+class TestGroups(unittest.TestCase):
     def setUp(self):
         self.group_id = "00grsuobu6NnfNXo30h7"
         self.user_id = "00umsmn2zeHhlu3sY0h7"
