@@ -1,3 +1,9 @@
 [run]
 source = oktaadminapi/
 omit = venv/*
+    tests/*
+    application.py
+    config.py
+    okta_class_extensions.py
+    setup.py
+    wsgi.py
